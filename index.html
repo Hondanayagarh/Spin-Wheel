@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Spin Wheel</title>
+  <style>
+    body { font-family: Arial, sans-serif; text-align: center; margin: 0; padding: 20px; }
+    #tokenPopup { display:flex; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); align-items:center; justify-content:center; z-index:9999; }
+    #tokenPopup div { background:#fff; padding:20px; border-radius:10px; width:300px; }
+    canvas { display:none; margin:20px auto; border-radius:50%; border:5px solid #333; }
+    button { padding:10px 20px; margin-top:10px; }
+    #spinBtn { display:none; }
+    #tokenMessage { color:red; font-size:14px; }
+  </style>
+</head>
+<body>
+
+  <div id="tokenPopup">
+    <div>
+      <h3>Enter Purchase Token</h3>
+      <input id="tokenInput" placeholder="Enter token" style="padding:10px; width:90%; margin-bottom:10px;">
+      <button onclick="checkToken()">Submit</button>
+      <p id="tokenMessage"></p>
+    </div>
+  </div>
+
+  <canvas id="wheelCanvas" width="400" height="400"></canvas>
+  <button id="spinBtn" onclick="spinWheel()">🎡 Spin</button>
+
+  <script>
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzH9THX4qOL_KbrQ6BLdKD5wcxGXYJ2u1eRXVV4-RIBcsKwpYS7FMKkuHlVteS65a3E/exec";
+
+    let wheelCanvas = document.getElementById("wheelCanvas");
+    let ctx = wheelCanvas.getContext("2d");
+    let prizes = ["Free Helmet", "Discount ₹500", "Free Service", "₹1000 Cashback", "Accessories", "Better luck next time"];
+    let currentAngle = 0, spinning = false;
+    let userToken = "";
+
+    function drawWheel() {
+      let arc = (2 * Math.PI) / prizes.length;
+      for (let i = 0; i < prizes.length; i++) {
+        ctx.beginPath();
+        ctx.fillStyle = i % 2 === 0 ? "#ffcc00" : "#ff6666";
+        ctx.moveTo(200,200);
+        ctx.arc(200,200,200,i*arc,(i+1)*arc);
+        ctx.lineTo(200,200);
+        ctx.fill();
+        ctx.save();
+        ctx.translate(200,200);
+        ctx.rotate(i*arc + arc/2);
+        ctx.fillStyle="#000";
+        ctx.font="16px Arial";
+        ctx.textAlign="center";
+        ctx.fillText(prizes[i],100,5);
+        ctx.restore();
+      }
+    }
+    drawWheel();
+
+    async function checkToken() {
+      let token = document.getElementById("tokenInput").value.trim();
+      if (!token) return;
+      userToken = token;
+      try {
+        let res = await fetch(SCRIPT_URL, {
+          method:"POST",
+          body: JSON.stringify({token:token}),
+          headers: {"Content-Type":"application/json"}
+        });
+        let data = await res.json();
+        if (data.status === "valid") {
+          document.getElementById("tokenPopup").style.display="none";
+          wheelCanvas.style.display="block";
+          document.getElementById("spinBtn").style.display="inline-block";
+        } else if (data.status === "already") {
+          document.getElementById("tokenMessage").style.color="green";
+          document.getElementById("tokenMessage").innerText = "🎁 Already used! You won: " + data.prize;
+        } else {
+          document.getElementById("tokenMessage").innerText = "❌ Invalid token.";
+        }
+      } catch (err) {
+        document.getElementById("tokenMessage").innerText = "⚠️ Network error.";
+        console.error(err);
+      }
+    }
+
+    function spinWheel() {
+      if (spinning) return;
+      spinning = true;
+      let target = Math.floor(Math.random() * prizes.length);
+      let arc = (2 * Math.PI) / prizes.length;
+      let stopAngle = (prizes.length - target) * arc + Math.random()*arc;
+      let spins = 5 * 2*Math.PI + stopAngle;
+      let duration = 4000, start = null;
+
+      function animate(t) {
+        if (!start) start = t;
+        let progress = (t-start)/duration;
+        if (progress > 1) progress = 1;
+        currentAngle = spins * progress;
+        ctx.clearRect(0,0,400,400);
+        ctx.save();
+        ctx.translate(200,200);
+        ctx.rotate(currentAngle);
+        ctx.translate(-200,-200);
+        drawWheel();
+        ctx.restore();
+        if (progress < 1) {
+          requestAnimationFrame(animate);
+        } else {
+          spinning = false;
+          let prize = prizes[target];
+          alert("🎉 You won: " + prize);
+          fetch(SCRIPT_URL, {
+            method:"POST",
+            body: JSON.stringify({token:userToken, prize:prize}),
+            headers: {"Content-Type":"application/json"}
+          }).catch(err => console.error("Save error", err));
+        }
+      }
+      requestAnimationFrame(animate);
+    }
+  </script>
+</body>
+</html>
