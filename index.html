@@ -1,39 +1,12 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <title>Token Test</title>
-</head>
-<body>
-  <h2>Frontend Test</h2>
+function doGet(e) {
+  var token = e.parameter.token || "";
+  if (!token) {
+    return ContentService.createTextOutput(
+      JSON.stringify({status:"error", message:"No token"})
+    ).setMimeType(ContentService.MimeType.JSON);
+  }
 
-  <label>Enter Purchase Token:</label><br>
-  <input type="text" id="tokenInput" placeholder="ABC123"><br><br>
-  <button onclick="checkToken()">Submit</button>
-
-  <p id="result"></p>
-
-  <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyjwF1_W7x_52piUobgAPfW59qcL7nF3k-VISNrydskQqx9Qpdbdj9BCufghuSfH3hZ/exec";
-
-    async function checkToken() {
-      const token = document.getElementById("tokenInput").value.trim();
-      if (!token) {
-        alert("Please enter a token");
-        return;
-      }
-
-      document.getElementById("result").innerText = "⏳ Checking...";
-
-      try {
-        const res = await fetch(`${SCRIPT_URL}?token=${encodeURIComponent(token)}`);
-        const data = await res.json();
-
-        document.getElementById("result").innerText = JSON.stringify(data);
-      } catch (err) {
-        document.getElementById("result").innerText = "⚠️ Network error: " + err;
-      }
-    }
-  </script>
-</body>
-</html>
+  return ContentService.createTextOutput(
+    JSON.stringify({status:"ok", token: token, message:"Token received"})
+  ).setMimeType(ContentService.MimeType.JSON);
+}
