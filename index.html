@@ -26,7 +26,7 @@
         const res = await fetch(PROXY + encodeURIComponent(SCRIPT_URL + "?token=" + token));
         const data = await res.json();
 
-        console.log("Response:", data); // Debug log
+        console.log("Response:", data); // Debugging log
 
         if (data.status === "valid") {
           document.getElementById("result").innerText = "✅ Token is valid, you can spin the wheel!";
