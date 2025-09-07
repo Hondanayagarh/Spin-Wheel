@@ -29,21 +29,16 @@
   </div>
 
   <script>
-    // 👉 replace with your own Apps Script URL
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzBrTj9LU8erDrMtiu_a02tPxIpEZiVDwoZ9BYX2Bb9P86pVXahOKIeuwEQVVLa9SF6/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxqNovRHvL2Rmysxdd6bvba4QP5OJJC1aYd3RjHRRJglTrTroikOlJicScR8z_6BvW2/exec";
     const PROXY = "https://corsproxy.io/?";
 
-    const prizes = [
-      "Free Service", "Discount Coupon", "Gift Hamper",
-      "Free Helmet", "Bike Wash", "Keychain",
-      "Lucky Draw", "Better Luck Next Time"
-    ];
+    const prizes = ["Free Service", "Discount Coupon", "Gift Hamper", "Free Helmet", "Bike Wash", "Keychain", "Lucky Draw", "Better Luck Next Time"];
 
     const canvas = document.getElementById("wheelCanvas");
     const ctx = canvas.getContext("2d");
     let currentAngle = 0;
 
-    // Draw the wheel
+    // Draw wheel
     function drawWheel() {
       const arc = 2 * Math.PI / prizes.length;
       for (let i = 0; i < prizes.length; i++) {
@@ -74,7 +69,7 @@
       }
 
       try {
-        const res = await fetch(PROXY + SCRIPT_URL + "?token=" + token);
+        const res = await fetch(PROXY + encodeURIComponent(SCRIPT_URL + "?token=" + token));
         const data = await res.json();
 
         if (data.status === "valid") {
@@ -108,11 +103,7 @@
 
         // Save prize to Google Sheet
         const token = document.getElementById("tokenInput").value.trim();
-        try {
-          await fetch(PROXY + SCRIPT_URL + "?token=" + token + "&prize=" + encodeURIComponent(prize));
-        } catch (err) {
-          console.error("Error saving prize:", err);
-        }
+        await fetch(PROXY + encodeURIComponent(SCRIPT_URL + "?token=" + token + "&prize=" + prize));
       }, 4000);
     });
   </script>
