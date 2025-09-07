@@ -1,67 +1,49 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
   <meta charset="UTF-8">
-  <title>Honda Nayagarh - Spin Wheel</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      margin-top: 100px;
-      background: #f9f9f9;
-    }
-    h2 {
-      color: #c00;
-    }
-    input, button {
-      padding: 10px;
-      margin: 10px;
-      font-size: 16px;
-    }
-    #result {
-      margin-top: 20px;
-      font-weight: bold;
-    }
-  </style>
+  <title>Spin Wheel Token Check</title>
 </head>
 <body>
-  <h2>Enter Purchase Token</h2>
-  <input type="text" id="token" placeholder="Enter Token">
+  <h3>Enter Purchase Token</h3>
+  <input id="tokenInput" placeholder="Enter token">
   <button onclick="checkToken()">Submit</button>
-  <p id="result"></p>
+  <p id="msg" style="color:red"></p>
 
-  <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyjwF1_W7x_52piUobgAPfW59qcL7nF3k-VISNrydskQqx9Qpdbdj9BCufghuSfH3hZ/exec";
+<script>
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyjwF1_W7x_52piUobgAPfW59qcL7nF3k-VISNrydskQqx9Qpdbdj9BCufghuSfH3hZ/exec";
 
-    async function checkToken() {
-      const token = document.getElementById("token").value.trim();
-      const resultBox = document.getElementById("result");
-      resultBox.textContent = "⏳ Checking...";
+async function checkToken() {
+  let token = document.getElementById("tokenInput").value.trim();
+  if (!token) return;
 
-      try {
-        let res = await fetch(SCRIPT_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ token: token })
-        });
+  try {
+    let res = await fetch(SCRIPT_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token })
+    });
 
-        if (!res.ok) throw new Error("HTTP " + res.status);
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    let data = await res.json();
 
-        let data = await res.json();
-
-        if (data.status === "success") {
-          alert(data.message);
-          resultBox.textContent = "✅ " + data.message;
-        } else if (data.status === "used") {
-          alert(data.message);
-          resultBox.textContent = "⚠️ " + data.message;
-        } else {
-          resultBox.textContent = "❌ Invalid token.";
-        }
-      } catch (err) {
-        resultBox.textContent = "⚠️ Network error: " + err.message;
-      }
+    if (data.status === "valid") {
+      document.getElementById("msg").style.color = "green";
+      document.getElementById("msg").innerText = "✅ Valid token! Spin unlocked.";
+    } else if (data.status === "already") {
+      document.getElementById("msg").style.color = "orange";
+      document.getElementById("msg").innerText = "🎁 Already used! You won: " + data.prize;
+    } else {
+      document.getElementById("msg").style.color = "red";
+      document.getElementById("msg").innerText = "❌ Invalid token.";
     }
-  </script>
+
+  } catch (err) {
+    document.getElementById("msg").style.color = "red";
+    document.getElementById("msg").innerText = "⚠️ Network error: " + err.message;
+    console.error(err);
+  }
+}
+</script>
 </body>
 </html>
