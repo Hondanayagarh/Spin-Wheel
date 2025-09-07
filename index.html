@@ -2,25 +2,29 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Spin Wheel Test</title>
+  <title>Frontend Test</title>
 </head>
 <body>
   <h2>Frontend Test</h2>
   <label>Enter Purchase Token:</label>
   <input id="tokenInput" type="text" placeholder="ABC123">
-  <button onclick="checkToken()">Submit</button>
+  <button id="submitBtn">Submit</button>
   <p id="result"></p>
 
   <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz8xceXroxUkH8d3-xwVRZaBo3z5FykwqIrYWkhnVi9pcMG1q-tcSqnhTnx9v8NaJgc/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyjh9SEH_Y-P0ojqQiNJJug7EXSef8DDywC1dyflTiWanxTdWEI5SkbpmgF7ELM4Vcw/exec";
 
-    async function checkToken() {
+    document.getElementById("submitBtn").addEventListener("click", async () => {
       const token = document.getElementById("tokenInput").value.trim();
-      if (!token) return;
+      if (!token) {
+        document.getElementById("result").innerText = "⚠️ Please enter a token.";
+        return;
+      }
 
       try {
         const res = await fetch(`${SCRIPT_URL}?token=${encodeURIComponent(token)}`);
         const data = await res.json();
+        console.log("Response:", data);
 
         if (data.status === "valid") {
           document.getElementById("result").innerText = "✅ Token is valid, you can spin the wheel!";
@@ -35,7 +39,7 @@
         document.getElementById("result").innerText = "⚠️ Network error.";
         console.error(err);
       }
-    }
+    });
   </script>
 </body>
 </html>
