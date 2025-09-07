@@ -10,7 +10,7 @@
   <script>
     async function checkToken() {
       let token = document.getElementById("token").value;
-      let res = await fetch("https://script.google.com/macros/s/AKfycbxFW_HflodJBg9waIkEnkl6c4t_SbqHmonUA7g-ql0cKuI5giTWMQCsIdfGJSicD69X/exec" + token);
+      let res = await fetch("https://script.google.com/macros/s/AKfycbw9F9Slln_E3BdNUodJEBWtN9RjAZVWDahkB6LYbwapt35_UWfDFeUQvvT5vWK96qcE/exec" + token);
       let data = await res.json();
       document.getElementById("result").innerText = JSON.stringify(data);
     }
