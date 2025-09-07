@@ -1,40 +1,30 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <title>Debug Frontend</title>
-</head>
-<body>
-  <h2>Frontend Debug Test</h2>
+<script>
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyjwF1_W7x_52piUobgAPfW59qcL7nF3k-VISNrydskQqx9Qpdbdj9BCufghuSfH3hZ/exec";
+  const PROXY = "https://corsproxy.io/?";
 
-  <label>Enter Purchase Token:</label>
-  <input id="tokenInput" type="text" placeholder="ABC123">
-  <button id="submitBtn">Submit</button>
+  document.getElementById("submitBtn").addEventListener("click", async () => {
+    const token = document.getElementById("tokenInput").value.trim();
+    if (!token) {
+      document.getElementById("result").innerText = "⚠️ Please enter a token.";
+      return;
+    }
 
-  <pre id="result"></pre>
+    try {
+      const res = await fetch(PROXY + encodeURIComponent(SCRIPT_URL + "?token=" + token));
+      const data = await res.json();
 
-  <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyjh9SEH_Y-P0ojqQiNJJug7EXSef8DDywC1dyflTiWanxTdWEI5SkbpmgF7ELM4Vcw/exec";
-
-    document.getElementById("submitBtn").addEventListener("click", async () => {
-      const token = document.getElementById("tokenInput").value.trim();
-      if (!token) {
-        document.getElementById("result").innerText = "⚠️ Please enter a token.";
-        return;
+      if (data.status === "valid") {
+        document.getElementById("result").innerText = "✅ Token valid!";
+      } else if (data.status === "already") {
+        document.getElementById("result").innerText = `🎁 Already used. Prize: ${data.prize}`;
+      } else if (data.status === "success") {
+        document.getElementById("result").innerText = `🎉 Prize saved: ${data.prize}`;
+      } else {
+        document.getElementById("result").innerText = "❌ Invalid token.";
       }
-
-      const url = `${SCRIPT_URL}?token=${encodeURIComponent(token)}`;
-      document.getElementById("result").innerText = "Fetching: " + url;
-
-      try {
-        const res = await fetch(url);
-        const text = await res.text(); // show raw response, not JSON
-        document.getElementById("result").innerText = "Response:\n" + text;
-      } catch (err) {
-        document.getElementById("result").innerText = "⚠️ Network error:\n" + err;
-        console.error(err);
-      }
-    });
-  </script>
-</body>
-</html>
+    } catch (err) {
+      document.getElementById("result").innerText = "⚠️ Network error.";
+      console.error(err);
+    }
+  });
+</script>
