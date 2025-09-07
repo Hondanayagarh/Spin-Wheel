@@ -2,23 +2,69 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Frontend Debug Test</title>
+  <title>Spin the Wheel Game</title>
+  <style>
+    body { font-family: Arial, sans-serif; text-align: center; margin: 20px; }
+    #wheelCanvas { border: 5px solid #333; border-radius: 50%; }
+    #spinBtn { margin-top: 20px; padding: 10px 20px; font-size: 18px; cursor: pointer; }
+    #result { margin-top: 20px; font-size: 20px; font-weight: bold; }
+  </style>
 </head>
 <body>
-  <h2>Frontend Debug Test</h2>
-  <label>Enter Purchase Token: </label>
-  <input id="tokenInput" type="text" placeholder="ABC123">
-  <button id="submitBtn">Submit</button>
-  <p id="result"></p>
+  <h2>Spin the Wheel Game</h2>
+
+  <!-- Token Verification -->
+  <div id="tokenSection">
+    <label>Enter Purchase Token: </label>
+    <input id="tokenInput" type="text" placeholder="ABC123">
+    <button id="submitBtn">Submit</button>
+    <p id="verifyResult"></p>
+  </div>
+
+  <!-- Spin the Wheel (hidden initially) -->
+  <div id="wheelSection" style="display:none;">
+    <canvas id="wheelCanvas" width="300" height="300"></canvas><br>
+    <button id="spinBtn">🎡 Spin the Wheel</button>
+    <p id="result"></p>
+  </div>
 
   <script>
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyjwF1_W7x_52piUobgAPfW59qcL7nF3k-VISNrydskQqx9Qpdbdj9BCufghuSfH3hZ/exec";
     const PROXY = "https://corsproxy.io/?";
 
+    const prizes = ["Free Service", "Discount Coupon", "Gift Hamper", "Free Helmet", "Bike Wash", "Keychain", "Lucky Draw", "Better Luck Next Time"];
+
+    const canvas = document.getElementById("wheelCanvas");
+    const ctx = canvas.getContext("2d");
+    let currentAngle = 0;
+
+    // Draw wheel
+    function drawWheel() {
+      const arc = 2 * Math.PI / prizes.length;
+      for (let i = 0; i < prizes.length; i++) {
+        const angle = i * arc;
+        ctx.beginPath();
+        ctx.fillStyle = i % 2 === 0 ? "#f39c12" : "#e74c3c";
+        ctx.moveTo(150, 150);
+        ctx.arc(150, 150, 150, angle, angle + arc);
+        ctx.lineTo(150, 150);
+        ctx.fill();
+        ctx.save();
+        ctx.translate(150, 150);
+        ctx.rotate(angle + arc / 2);
+        ctx.fillStyle = "white";
+        ctx.font = "14px Arial";
+        ctx.fillText(prizes[i], 70, 10);
+        ctx.restore();
+      }
+    }
+    drawWheel();
+
+    // Verify Token
     document.getElementById("submitBtn").addEventListener("click", async () => {
       const token = document.getElementById("tokenInput").value.trim();
       if (!token) {
-        document.getElementById("result").innerText = "⚠️ Please enter a token.";
+        document.getElementById("verifyResult").innerText = "⚠️ Please enter a token.";
         return;
       }
 
@@ -26,23 +72,38 @@
         const res = await fetch(PROXY + encodeURIComponent(SCRIPT_URL + "?token=" + token));
         const data = await res.json();
 
-        console.log("Response:", data); // Debugging log
-
         if (data.status === "valid") {
-          document.getElementById("result").innerText = "✅ Token is valid, you can spin the wheel!";
+          document.getElementById("verifyResult").innerText = "✅ Token valid! You can spin the wheel.";
+          document.getElementById("tokenSection").style.display = "none";
+          document.getElementById("wheelSection").style.display = "block";
         } else if (data.status === "already") {
-          document.getElementById("result").innerText = `🎁 Token already used. Prize: ${data.prize}`;
-        } else if (data.status === "success") {
-          document.getElementById("result").innerText = `🎉 Prize saved: ${data.prize}`;
-        } else if (data.status === "invalid") {
-          document.getElementById("result").innerText = "❌ Invalid token.";
+          document.getElementById("verifyResult").innerText = `🎁 Token already used. Prize: ${data.prize}`;
         } else {
-          document.getElementById("result").innerText = "⚠️ Unknown response: " + JSON.stringify(data);
+          document.getElementById("verifyResult").innerText = "❌ Invalid token.";
         }
       } catch (err) {
-        document.getElementById("result").innerText = "⚠️ Network error.";
-        console.error(err);
+        document.getElementById("verifyResult").innerText = "⚠️ Network error.";
       }
+    });
+
+    // Spin Logic
+    document.getElementById("spinBtn").addEventListener("click", () => {
+      const spinAngle = Math.floor(Math.random() * 360) + 720; // at least 2 full spins
+      currentAngle += spinAngle;
+      canvas.style.transition = "transform 4s ease-out";
+      canvas.style.transform = `rotate(${currentAngle}deg)`;
+
+      setTimeout(async () => {
+        const arc = 360 / prizes.length;
+        const winningIndex = Math.floor(((currentAngle % 360) / arc));
+        const prize = prizes[prizes.length - 1 - winningIndex];
+
+        document.getElementById("result").innerText = `🎉 You won: ${prize}!`;
+
+        // Save prize to Google Sheet
+        const token = document.getElementById("tokenInput").value.trim();
+        await fetch(PROXY + encodeURIComponent(SCRIPT_URL + "?token=" + token + "&prize=" + prize));
+      }, 4000);
     });
   </script>
 </body>
