@@ -1,18 +1,40 @@
 <!DOCTYPE html>
 <html>
+<head>
+  <meta charset="utf-8">
+  <title>Spin Wheel Test</title>
+</head>
 <body>
   <h2>Frontend Test</h2>
   <label>Enter Purchase Token:</label>
-  <input type="text" id="token">
+  <input id="tokenInput" type="text" placeholder="ABC123">
   <button onclick="checkToken()">Submit</button>
   <p id="result"></p>
 
   <script>
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz8xceXroxUkH8d3-xwVRZaBo3z5FykwqIrYWkhnVi9pcMG1q-tcSqnhTnx9v8NaJgc/exec";
+
     async function checkToken() {
-      let token = document.getElementById("token").value;
-      let res = await fetch("https://script.google.com/macros/s/AKfycbz8xceXroxUkH8d3-xwVRZaBo3z5FykwqIrYWkhnVi9pcMG1q-tcSqnhTnx9v8NaJgc/exec" + token);
-      let data = await res.json();
-      document.getElementById("result").innerText = JSON.stringify(data);
+      const token = document.getElementById("tokenInput").value.trim();
+      if (!token) return;
+
+      try {
+        const res = await fetch(`${SCRIPT_URL}?token=${encodeURIComponent(token)}`);
+        const data = await res.json();
+
+        if (data.status === "valid") {
+          document.getElementById("result").innerText = "✅ Token is valid, you can spin the wheel!";
+        } else if (data.status === "already") {
+          document.getElementById("result").innerText = `🎁 Token already used. Prize: ${data.prize}`;
+        } else if (data.status === "success") {
+          document.getElementById("result").innerText = `🎉 Prize saved: ${data.prize}`;
+        } else {
+          document.getElementById("result").innerText = "❌ Invalid token.";
+        }
+      } catch (err) {
+        document.getElementById("result").innerText = "⚠️ Network error.";
+        console.error(err);
+      }
     }
   </script>
 </body>
