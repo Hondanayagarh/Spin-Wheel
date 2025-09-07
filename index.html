@@ -1,30 +1,49 @@
-<script>
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyjwF1_W7x_52piUobgAPfW59qcL7nF3k-VISNrydskQqx9Qpdbdj9BCufghuSfH3hZ/exec";
-  const PROXY = "https://corsproxy.io/?";
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Frontend Debug Test</title>
+</head>
+<body>
+  <h2>Frontend Debug Test</h2>
+  <label>Enter Purchase Token: </label>
+  <input id="tokenInput" type="text" placeholder="ABC123">
+  <button id="submitBtn">Submit</button>
+  <p id="result"></p>
 
-  document.getElementById("submitBtn").addEventListener("click", async () => {
-    const token = document.getElementById("tokenInput").value.trim();
-    if (!token) {
-      document.getElementById("result").innerText = "⚠️ Please enter a token.";
-      return;
-    }
+  <script>
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyjwF1_W7x_52piUobgAPfW59qcL7nF3k-VISNrydskQqx9Qpdbdj9BCufghuSfH3hZ/exec";
+    const PROXY = "https://corsproxy.io/?";
 
-    try {
-      const res = await fetch(PROXY + encodeURIComponent(SCRIPT_URL + "?token=" + token));
-      const data = await res.json();
-
-      if (data.status === "valid") {
-        document.getElementById("result").innerText = "✅ Token valid!";
-      } else if (data.status === "already") {
-        document.getElementById("result").innerText = `🎁 Already used. Prize: ${data.prize}`;
-      } else if (data.status === "success") {
-        document.getElementById("result").innerText = `🎉 Prize saved: ${data.prize}`;
-      } else {
-        document.getElementById("result").innerText = "❌ Invalid token.";
+    document.getElementById("submitBtn").addEventListener("click", async () => {
+      const token = document.getElementById("tokenInput").value.trim();
+      if (!token) {
+        document.getElementById("result").innerText = "⚠️ Please enter a token.";
+        return;
       }
-    } catch (err) {
-      document.getElementById("result").innerText = "⚠️ Network error.";
-      console.error(err);
-    }
-  });
-</script>
+
+      try {
+        const res = await fetch(PROXY + encodeURIComponent(SCRIPT_URL + "?token=" + token));
+        const data = await res.json();
+
+        console.log("Response:", data); // Debug log
+
+        if (data.status === "valid") {
+          document.getElementById("result").innerText = "✅ Token is valid, you can spin the wheel!";
+        } else if (data.status === "already") {
+          document.getElementById("result").innerText = `🎁 Token already used. Prize: ${data.prize}`;
+        } else if (data.status === "success") {
+          document.getElementById("result").innerText = `🎉 Prize saved: ${data.prize}`;
+        } else if (data.status === "invalid") {
+          document.getElementById("result").innerText = "❌ Invalid token.";
+        } else {
+          document.getElementById("result").innerText = "⚠️ Unknown response: " + JSON.stringify(data);
+        }
+      } catch (err) {
+        document.getElementById("result").innerText = "⚠️ Network error.";
+        console.error(err);
+      }
+    });
+  </script>
+</body>
+</html>
