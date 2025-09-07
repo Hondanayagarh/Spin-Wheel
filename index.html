@@ -1,45 +1,39 @@
-<div id="tokenPopup" style="display:flex; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); align-items:center; justify-content:center; z-index:9999;">
-  <div style="background:#fff; padding:20px; border-radius:10px; text-align:center; width:300px;">
-    <h3>Enter Purchase Token</h3>
-    <input id="tokenInput" placeholder="Enter token" style="padding:10px; width:90%; margin-bottom:10px;">
-    <button onclick="checkToken()">Submit</button>
-    <p id="tokenMessage" style="color:red; font-size:14px;"></p>
-  </div>
-</div>
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Token Test</title>
+</head>
+<body>
+  <h2>Frontend Test</h2>
 
-<script>
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyjwF1_W7x_52piUobgAPfW59qcL7nF3k-VISNrydskQqx9Qpdbdj9BCufghuSfH3hZ/exec";
+  <label>Enter Purchase Token:</label><br>
+  <input type="text" id="tokenInput" placeholder="ABC123"><br><br>
+  <button onclick="checkToken()">Submit</button>
 
-async function checkToken() {
-  let token = document.getElementById("tokenInput").value.trim();
-  if (!token) return;
+  <p id="result"></p>
 
-  try {
-    let res = await fetch(SCRIPT_URL, {
-      method: "POST",
-      body: JSON.stringify({token: token}),
-      headers: {"Content-Type": "application/json"}
-    });
+  <script>
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyjwF1_W7x_52piUobgAPfW59qcL7nF3k-VISNrydskQqx9Qpdbdj9BCufghuSfH3hZ/exec";
 
-    let data = await res.json();
-    console.log("Response:", data);
+    async function checkToken() {
+      const token = document.getElementById("tokenInput").value.trim();
+      if (!token) {
+        alert("Please enter a token");
+        return;
+      }
 
-    if (data.status === "valid") {
-      document.getElementById("tokenMessage").style.color = "green";
-      document.getElementById("tokenMessage").innerText = "✅ Valid token! Now spin the wheel.";
-    } else if (data.status === "already") {
-      document.getElementById("tokenMessage").style.color = "orange";
-      document.getElementById("tokenMessage").innerText = "🎁 Already used. You won: " + data.prize;
-    } else if (data.status === "invalid") {
-      document.getElementById("tokenMessage").style.color = "red";
-      document.getElementById("tokenMessage").innerText = "❌ Invalid token.";
-    } else {
-      document.getElementById("tokenMessage").style.color = "red";
-      document.getElementById("tokenMessage").innerText = "⚠️ Error: " + data.message;
+      document.getElementById("result").innerText = "⏳ Checking...";
+
+      try {
+        const res = await fetch(`${SCRIPT_URL}?token=${encodeURIComponent(token)}`);
+        const data = await res.json();
+
+        document.getElementById("result").innerText = JSON.stringify(data);
+      } catch (err) {
+        document.getElementById("result").innerText = "⚠️ Network error: " + err;
+      }
     }
-  } catch (err) {
-    console.error(err);
-    document.getElementById("tokenMessage").innerText = "⚠️ Network error: " + err;
-  }
-}
-</script>
+  </script>
+</body>
+</html>
