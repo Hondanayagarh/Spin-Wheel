@@ -1,12 +1,19 @@
-function doGet(e) {
-  var token = e.parameter.token || "";
-  if (!token) {
-    return ContentService.createTextOutput(
-      JSON.stringify({status:"error", message:"No token"})
-    ).setMimeType(ContentService.MimeType.JSON);
-  }
+<!DOCTYPE html>
+<html>
+<body>
+  <h2>Frontend Test</h2>
+  <label>Enter Purchase Token:</label>
+  <input type="text" id="token">
+  <button onclick="checkToken()">Submit</button>
+  <p id="result"></p>
 
-  return ContentService.createTextOutput(
-    JSON.stringify({status:"ok", token: token, message:"Token received"})
-  ).setMimeType(ContentService.MimeType.JSON);
-}
+  <script>
+    async function checkToken() {
+      let token = document.getElementById("token").value;
+      let res = await fetch("https://script.google.com/macros/s/AKfycbyjwF1_W7x_52piUobgAPfW59qcL7nF3k-VISNrydskQqx9Qpdbdj9BCufghuSfH3hZ/exec?token=" + token);
+      let data = await res.json();
+      document.getElementById("result").innerText = JSON.stringify(data);
+    }
+  </script>
+</body>
+</html>
