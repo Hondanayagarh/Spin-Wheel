@@ -29,16 +29,21 @@
   </div>
 
   <script>
+    // 👉 replace with your own Apps Script URL
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzBrTj9LU8erDrMtiu_a02tPxIpEZiVDwoZ9BYX2Bb9P86pVXahOKIeuwEQVVLa9SF6/exec";
     const PROXY = "https://corsproxy.io/?";
 
-    const prizes = ["Free Service", "Discount Coupon", "Gift Hamper", "Free Helmet", "Bike Wash", "Keychain", "Lucky Draw", "Better Luck Next Time"];
+    const prizes = [
+      "Free Service", "Discount Coupon", "Gift Hamper",
+      "Free Helmet", "Bike Wash", "Keychain",
+      "Lucky Draw", "Better Luck Next Time"
+    ];
 
     const canvas = document.getElementById("wheelCanvas");
     const ctx = canvas.getContext("2d");
     let currentAngle = 0;
 
-    // Draw wheel
+    // Draw the wheel
     function drawWheel() {
       const arc = 2 * Math.PI / prizes.length;
       for (let i = 0; i < prizes.length; i++) {
@@ -69,7 +74,7 @@
       }
 
       try {
-        const res = await fetch(PROXY + encodeURIComponent(SCRIPT_URL + "?token=" + token));
+        const res = await fetch(PROXY + SCRIPT_URL + "?token=" + token);
         const data = await res.json();
 
         if (data.status === "valid") {
@@ -83,6 +88,7 @@
         }
       } catch (err) {
         document.getElementById("verifyResult").innerText = "⚠️ Network error.";
+        console.error(err);
       }
     });
 
@@ -102,7 +108,11 @@
 
         // Save prize to Google Sheet
         const token = document.getElementById("tokenInput").value.trim();
-        await fetch(PROXY + encodeURIComponent(SCRIPT_URL + "?token=" + token + "&prize=" + prize));
+        try {
+          await fetch(PROXY + SCRIPT_URL + "?token=" + token + "&prize=" + encodeURIComponent(prize));
+        } catch (err) {
+          console.error("Error saving prize:", err);
+        }
       }, 4000);
     });
   </script>
