@@ -239,43 +239,48 @@
             document.getElementById('debugUrl').textContent = BACKEND_URL;
         }
 
-        // API call using iframe method (avoids CORS completely)
+        // Simple script tag JSONP method - most reliable
         function callAPI(params) {
             return new Promise((resolve, reject) => {
-                const iframe = document.getElementById('apiFrame');
-                const timeoutId = setTimeout(() => {
-                    window.handleApiResponse = null;
-                    reject(new Error('Request timeout'));
-                }, 15000);
+                const callbackName = 'api_callback_' + Date.now();
                 
-                // Set up response handler
-                window.handleApiResponse = (data) => {
-                    clearTimeout(timeoutId);
-                    window.handleApiResponse = null;
-                    document.getElementById('debugResponse').textContent = JSON.stringify(data);
-                    resolve(data);
-                };
+                // Create script element
+                const script = document.createElement('script');
                 
-                // Also listen for postMessage
-                const messageHandler = (event) => {
-                    if (event.data && event.data.type === 'API_RESPONSE') {
-                        window.removeEventListener('message', messageHandler);
-                        clearTimeout(timeoutId);
-                        window.handleApiResponse = null;
-                        document.getElementById('debugResponse').textContent = JSON.stringify(event.data.data);
-                        resolve(event.data.data);
-                    }
-                };
-                window.addEventListener('message', messageHandler);
-                
-                // Build URL
+                // Build URL with callback
                 const url = new URL(BACKEND_URL);
                 Object.keys(params).forEach(key => {
                     if (params[key]) url.searchParams.append(key, params[key]);
                 });
+                url.searchParams.append('callback', callbackName);
                 
-                // Load in iframe
-                iframe.src = url.toString();
+                script.src = url.toString();
+                
+                // Set up callback
+                window[callbackName] = (data) => {
+                    document.head.removeChild(script);
+                    delete window[callbackName];
+                    document.getElementById('debugResponse').textContent = JSON.stringify(data);
+                    resolve(data);
+                };
+                
+                // Handle errors and timeout
+                script.onerror = () => {
+                    document.head.removeChild(script);
+                    delete window[callbackName];
+                    reject(new Error('Script load failed'));
+                };
+                
+                setTimeout(() => {
+                    if (window[callbackName]) {
+                        document.head.removeChild(script);
+                        delete window[callbackName];
+                        reject(new Error('Request timeout'));
+                    }
+                }, 10000);
+                
+                // Add to head
+                document.head.appendChild(script);
             });
         }
 
