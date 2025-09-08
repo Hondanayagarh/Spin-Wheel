@@ -1,111 +1,423 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="utf-8">
-  <title>Spin the Wheel Game</title>
-  <style>
-    body { font-family: Arial, sans-serif; text-align: center; margin: 20px; }
-    #wheelCanvas { border: 5px solid #333; border-radius: 50%; }
-    #spinBtn { margin-top: 20px; padding: 10px 20px; font-size: 18px; cursor: pointer; }
-    #result { margin-top: 20px; font-size: 20px; font-weight: bold; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎡 Spin the Wheel Rewards</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+        }
+
+        .container {
+            text-align: center;
+            max-width: 500px;
+            padding: 20px;
+        }
+
+        h1 {
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .token-section {
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            backdrop-filter: blur(10px);
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        input {
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1em;
+            width: 100%;
+            max-width: 300px;
+            text-align: center;
+            outline: none;
+        }
+
+        button {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: transform 0.2s;
+            margin: 10px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+        }
+
+        button:disabled {
+            background: #666;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .wheel-section {
+            display: none;
+            margin-top: 30px;
+        }
+
+        .wheel-container {
+            position: relative;
+            width: 300px;
+            height: 300px;
+            margin: 0 auto 20px;
+        }
+
+        .wheel {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 8px solid #fff;
+            position: relative;
+            overflow: hidden;
+            transition: transform 4s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        .wheel-segment {
+            position: absolute;
+            width: 50%;
+            height: 50%;
+            transform-origin: 100% 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.9em;
+            color: white;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.7);
+            padding: 5px;
+            text-align: center;
+        }
+
+        .wheel-pointer {
+            position: absolute;
+            top: -5px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 15px solid transparent;
+            border-right: 15px solid transparent;
+            border-top: 25px solid #fff;
+            z-index: 10;
+        }
+
+        .result {
+            margin-top: 20px;
+            font-size: 1.3em;
+            font-weight: bold;
+            padding: 20px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+        }
+
+        .error {
+            color: #ff6b6b;
+            background: rgba(255,107,107,0.1);
+        }
+
+        .success {
+            color: #51cf66;
+            background: rgba(81,207,102,0.1);
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        #apiFrame {
+            display: none;
+        }
+
+        .debug {
+            background: rgba(0,0,0,0.3);
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-size: 0.8em;
+        }
+    </style>
 </head>
 <body>
-  <h2>Spin the Wheel Game</h2>
+    <div class="container">
+        <h1>🎡 Spin the Wheel</h1>
+        
+        <div class="token-section">
+            <div class="input-group">
+                <input type="text" id="tokenInput" placeholder="Enter your purchase token (e.g., TOKEN001)" maxlength="50">
+            </div>
+            <button id="verifyBtn" onclick="verifyToken()">Verify Token</button>
+            
+            <!-- Debug info -->
+            <div id="debugInfo" class="debug hidden">
+                <strong>Debug Info:</strong><br>
+                Backend URL: <span id="debugUrl"></span><br>
+                Last Response: <span id="debugResponse"></span>
+            </div>
+            <button onclick="toggleDebug()" style="font-size: 0.8em; padding: 5px 10px;">Toggle Debug</button>
+        </div>
 
-  <!-- Token Verification -->
-  <div id="tokenSection">
-    <label>Enter Purchase Token: </label>
-    <input id="tokenInput" type="text" placeholder="ABC123">
-    <button id="submitBtn">Submit</button>
-    <p id="verifyResult"></p>
-  </div>
+        <div id="wheelSection" class="wheel-section">
+            <div class="wheel-container">
+                <div class="wheel-pointer"></div>
+                <div id="wheel" class="wheel">
+                    <!-- Wheel segments will be generated by JavaScript -->
+                </div>
+            </div>
+            <button id="spinBtn" onclick="spinWheel()">🎯 SPIN THE WHEEL!</button>
+        </div>
 
-  <!-- Spin the Wheel (hidden initially) -->
-  <div id="wheelSection" style="display:none;">
-    <canvas id="wheelCanvas" width="300" height="300"></canvas><br>
-    <button id="spinBtn">🎡 Spin the Wheel</button>
-    <p id="result"></p>
-  </div>
+        <div id="result" class="result hidden"></div>
+    </div>
 
-  <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxqNovRHvL2Rmysxdd6bvba4QP5OJJC1aYd3RjHRRJglTrTroikOlJicScR8z_6BvW2/exec";
-    const PROXY = "https://corsproxy.io/?";
+    <!-- Hidden iframe for API calls -->
+    <iframe id="apiFrame" name="apiFrame"></iframe>
 
-    const prizes = ["Free Service", "Discount Coupon", "Gift Hamper", "Free Helmet", "Bike Wash", "Keychain", "Lucky Draw", "Better Luck Next Time"];
+    <script>
+        // Backend URL - REPLACE WITH YOUR ACTUAL URL
+        const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbxUHoCqUKseKf2Pjrp77ue2mXYnEG3z2noBILgK44i8ZmoQI9CDgn6CwCHBin3mTmCI/exec';
+        
+        const prizes = [
+            { name: "Free Service", color: "#ff6b6b" },
+            { name: "Discount", color: "#4ecdc4" },
+            { name: "Helmet", color: "#45b7d1" },
+            { name: "Keychain", color: "#f9ca24" },
+            { name: "Better Luck Next Time", color: "#6c5ce7" }
+        ];
 
-    const canvas = document.getElementById("wheelCanvas");
-    const ctx = canvas.getContext("2d");
-    let currentAngle = 0;
+        let currentToken = '';
+        let isSpinning = false;
+        let currentRequest = null;
 
-    // Draw wheel
-    function drawWheel() {
-      const arc = 2 * Math.PI / prizes.length;
-      for (let i = 0; i < prizes.length; i++) {
-        const angle = i * arc;
-        ctx.beginPath();
-        ctx.fillStyle = i % 2 === 0 ? "#f39c12" : "#e74c3c";
-        ctx.moveTo(150, 150);
-        ctx.arc(150, 150, 150, angle, angle + arc);
-        ctx.lineTo(150, 150);
-        ctx.fill();
-        ctx.save();
-        ctx.translate(150, 150);
-        ctx.rotate(angle + arc / 2);
-        ctx.fillStyle = "white";
-        ctx.font = "14px Arial";
-        ctx.fillText(prizes[i], 70, 10);
-        ctx.restore();
-      }
-    }
-    drawWheel();
-
-    // Verify Token
-    document.getElementById("submitBtn").addEventListener("click", async () => {
-      const token = document.getElementById("tokenInput").value.trim();
-      if (!token) {
-        document.getElementById("verifyResult").innerText = "⚠️ Please enter a token.";
-        return;
-      }
-
-      try {
-        const res = await fetch(PROXY + encodeURIComponent(SCRIPT_URL + "?token=" + token));
-        const data = await res.json();
-
-        if (data.status === "valid") {
-          document.getElementById("verifyResult").innerText = "✅ Token valid! You can spin the wheel.";
-          document.getElementById("tokenSection").style.display = "none";
-          document.getElementById("wheelSection").style.display = "block";
-        } else if (data.status === "already") {
-          document.getElementById("verifyResult").innerText = `🎁 Token already used. Prize: ${data.prize}`;
-        } else {
-          document.getElementById("verifyResult").innerText = "❌ Invalid token.";
+        // Debug functions
+        function toggleDebug() {
+            const debug = document.getElementById('debugInfo');
+            debug.classList.toggle('hidden');
+            document.getElementById('debugUrl').textContent = BACKEND_URL;
         }
-      } catch (err) {
-        document.getElementById("verifyResult").innerText = "⚠️ Network error.";
-        console.error(err);
-      }
-    });
 
-    // Spin Logic
-    document.getElementById("spinBtn").addEventListener("click", () => {
-      const spinAngle = Math.floor(Math.random() * 360) + 720; // at least 2 full spins
-      currentAngle += spinAngle;
-      canvas.style.transition = "transform 4s ease-out";
-      canvas.style.transform = `rotate(${currentAngle}deg)`;
+        // API call using iframe method (avoids CORS completely)
+        function callAPI(params) {
+            return new Promise((resolve, reject) => {
+                const iframe = document.getElementById('apiFrame');
+                const timeoutId = setTimeout(() => {
+                    window.handleApiResponse = null;
+                    reject(new Error('Request timeout'));
+                }, 15000);
+                
+                // Set up response handler
+                window.handleApiResponse = (data) => {
+                    clearTimeout(timeoutId);
+                    window.handleApiResponse = null;
+                    document.getElementById('debugResponse').textContent = JSON.stringify(data);
+                    resolve(data);
+                };
+                
+                // Also listen for postMessage
+                const messageHandler = (event) => {
+                    if (event.data && event.data.type === 'API_RESPONSE') {
+                        window.removeEventListener('message', messageHandler);
+                        clearTimeout(timeoutId);
+                        window.handleApiResponse = null;
+                        document.getElementById('debugResponse').textContent = JSON.stringify(event.data.data);
+                        resolve(event.data.data);
+                    }
+                };
+                window.addEventListener('message', messageHandler);
+                
+                // Build URL
+                const url = new URL(BACKEND_URL);
+                Object.keys(params).forEach(key => {
+                    if (params[key]) url.searchParams.append(key, params[key]);
+                });
+                
+                // Load in iframe
+                iframe.src = url.toString();
+            });
+        }
 
-      setTimeout(async () => {
-        const arc = 360 / prizes.length;
-        const winningIndex = Math.floor(((currentAngle % 360) / arc));
-        const prize = prizes[prizes.length - 1 - winningIndex];
+        // Initialize wheel
+        function initializeWheel() {
+            const wheel = document.getElementById('wheel');
+            const segmentAngle = 360 / prizes.length;
+            
+            wheel.innerHTML = '';
+            
+            prizes.forEach((prize, index) => {
+                const segment = document.createElement('div');
+                segment.className = 'wheel-segment';
+                segment.style.backgroundColor = prize.color;
+                segment.style.transform = `rotate(${index * segmentAngle}deg)`;
+                segment.innerHTML = `<span style="transform: rotate(${segmentAngle/2}deg)">${prize.name}</span>`;
+                wheel.appendChild(segment);
+            });
+        }
 
-        document.getElementById("result").innerText = `🎉 You won: ${prize}!`;
+        async function verifyToken() {
+            const token = document.getElementById('tokenInput').value.trim();
+            const verifyBtn = document.getElementById('verifyBtn');
+            const result = document.getElementById('result');
+            
+            if (!token) {
+                showResult('Please enter a token', 'error');
+                return;
+            }
 
-        // Save prize to Google Sheet
-        const token = document.getElementById("tokenInput").value.trim();
-        await fetch(PROXY + encodeURIComponent(SCRIPT_URL + "?token=" + token + "&prize=" + prize));
-      }, 4000);
-    });
-  </script>
+            if (!BACKEND_URL || BACKEND_URL.includes('YOUR_GOOGLE_APPS_SCRIPT')) {
+                showResult('⚠️ Backend URL not configured. Please update BACKEND_URL in the script.', 'error');
+                return;
+            }
+
+            verifyBtn.disabled = true;
+            verifyBtn.innerHTML = '<span class="loading"></span> Verifying...';
+
+            try {
+                const data = await callAPI({ token: token });
+
+                switch (data.status) {
+                    case 'valid':
+                        currentToken = token;
+                        document.getElementById('wheelSection').style.display = 'block';
+                        document.querySelector('.token-section').style.display = 'none';
+                        initializeWheel();
+                        showResult('✅ Token verified! Spin the wheel to claim your prize!', 'success');
+                        break;
+                    
+                    case 'already':
+                        showResult(`🎁 This token was already used. Your prize was: ${data.prize}`, 'error');
+                        break;
+                    
+                    case 'invalid':
+                        showResult('❌ Invalid token. Please check and try again.', 'error');
+                        break;
+                    
+                    default:
+                        showResult(`Error: ${data.message || 'Unknown error'}`, 'error');
+                }
+            } catch (error) {
+                console.error('Verification error:', error);
+                showResult(`❌ Connection error: ${error.message}. Make sure the Google Apps Script is deployed correctly.`, 'error');
+            }
+
+            verifyBtn.disabled = false;
+            verifyBtn.innerHTML = 'Verify Token';
+        }
+
+        async function spinWheel() {
+            if (isSpinning) return;
+            
+            const spinBtn = document.getElementById('spinBtn');
+            const wheel = document.getElementById('wheel');
+            
+            isSpinning = true;
+            spinBtn.disabled = true;
+            spinBtn.innerHTML = '🎯 Spinning...';
+            
+            // Random prize selection
+            const selectedPrizeIndex = Math.floor(Math.random() * prizes.length);
+            const selectedPrize = prizes[selectedPrizeIndex];
+            
+            // Calculate rotation (multiple spins + landing on selected prize)
+            const segmentAngle = 360 / prizes.length;
+            const baseRotation = 360 * 5; // 5 full spins
+            const prizeRotation = (prizes.length - selectedPrizeIndex) * segmentAngle - (segmentAngle / 2);
+            const totalRotation = baseRotation + prizeRotation;
+            
+            // Animate wheel
+            wheel.style.transform = `rotate(${totalRotation}deg)`;
+            
+            // Wait for animation to complete
+            setTimeout(async () => {
+                try {
+                    // Save result to backend
+                    const data = await callAPI({ 
+                        token: currentToken, 
+                        prize: selectedPrize.name 
+                    });
+                    
+                    if (data.status === 'success') {
+                        showResult(`🎉 Congratulations! You won: ${selectedPrize.name}!`, 'success');
+                        spinBtn.style.display = 'none';
+                    } else if (data.status === 'already') {
+                        showResult(`🎁 Token already used. Your prize was: ${data.prize}`, 'error');
+                    } else {
+                        showResult(`Error saving result: ${data.message || 'Unknown error'}`, 'error');
+                    }
+                } catch (error) {
+                    console.error('Save error:', error);
+                    showResult(`🎉 You won: ${selectedPrize.name}! (Note: Error saving result - ${error.message})`, 'success');
+                }
+                
+                isSpinning = false;
+            }, 4000);
+        }
+
+        function showResult(message, type) {
+            const result = document.getElementById('result');
+            result.textContent = message;
+            result.className = `result ${type}`;
+            result.classList.remove('hidden');
+        }
+
+        // Allow Enter key to verify token
+        document.getElementById('tokenInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                verifyToken();
+            }
+        });
+
+        // Initialize wheel on load
+        initializeWheel();
+
+        // Test connection on load
+        setTimeout(() => {
+            if (!document.getElementById('debugInfo').classList.contains('hidden')) {
+                document.getElementById('debugUrl').textContent = BACKEND_URL;
+            }
+        }, 1000);
+    </script>
 </body>
 </html>
